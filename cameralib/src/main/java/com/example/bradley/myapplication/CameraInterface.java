@@ -1,13 +1,7 @@
 package com.example.bradley.myapplication;
 
-import android.annotation.TargetApi;
-import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
-import android.graphics.PixelFormat;
 import android.hardware.Camera;
-import android.os.Build;
-import android.support.annotation.RequiresApi;
-import android.util.Log;
 import android.view.SurfaceHolder;
 
 import java.io.IOException;
@@ -47,6 +41,24 @@ public class CameraInterface implements Camera.PreviewCallback {
     public void doOpenCamera(CamOpenOverCallback callback){
         try {
             mCamera = Camera.open();
+            Camera.Parameters parameters = mCamera.getParameters();
+            List<Camera.Size> preSize = parameters.getSupportedPreviewSizes();
+            previewWidth = preSize.get(0).width;
+            previewHeight = preSize.get(0).height;
+            for (int i = 1; i < preSize.size(); i++) {
+                double similarity = Math.abs(((double) preSize.get(i).height / screenHeight)
+                        - ((double) preSize.get(i).width / screenWidth));
+                if (similarity < Math.abs(((double) previewHeight / screenHeight)
+                        - ((double) previewWidth / screenWidth))) {
+                    previewWidth = preSize.get(i).width;
+                    previewHeight = preSize.get(i).height;
+                }
+            }
+            parameters.setPreviewSize(previewWidth, previewHeight);
+            mCamera.setParameters(parameters);
+            bufferSize = previewWidth * previewHeight;
+            bufferSize  = bufferSize * ImageFormat.getBitsPerPixel(parameters.getPreviewFormat()) / 8;
+            gBuffer = new byte[bufferSize];
             if (callback != null) {
                 callback.onCameraHasOpened();
             }
@@ -66,33 +78,21 @@ public class CameraInterface implements Camera.PreviewCallback {
         }
     }
 
-    @TargetApi(Build.VERSION_CODES.FROYO)
-    @RequiresApi(api = Build.VERSION_CODES.ECLAIR)
-    public void doStartPreview(){
-        Camera.Parameters parameters = mCamera.getParameters();
-        List<Camera.Size> preSize = parameters.getSupportedPreviewSizes();
-        previewWidth = preSize.get(0).width;
-        previewHeight = preSize.get(0).height;
-        for (int i = 1; i < preSize.size(); i++) {
-            double similarity = Math.abs(((double) preSize.get(i).height / screenHeight)
-                     - ((double) preSize.get(i).width / screenWidth));
-            if (similarity < Math.abs(((double) previewHeight / screenHeight)
-                     - ((double) previewWidth / screenWidth))) {
-                previewWidth = preSize.get(i).width;
-                previewHeight = preSize.get(i).height;
-               }
+
+    public void doStartPreview(SurfaceHolder surfaceHolder){
+
+        try {
+            mCamera.setPreviewDisplay(surfaceHolder);
+            mCamera.addCallbackBuffer(gBuffer);
+            mCamera.setPreviewCallbackWithBuffer(this);
+            mCamera.startPreview();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        parameters.setPreviewSize(previewWidth, previewHeight);
-        mCamera.setParameters(parameters);
-        bufferSize = previewWidth * previewHeight;
-        bufferSize  = bufferSize * ImageFormat.getBitsPerPixel(parameters.getPreviewFormat()) / 8;
-        gBuffer = new byte[bufferSize];
-        mCamera.addCallbackBuffer(gBuffer);
-        mCamera.setPreviewCallbackWithBuffer(this);
-        mCamera.startPreview();
+
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.FROYO)
+
     @Override
     public void onPreviewFrame(byte[] data, Camera camera) {
         mCamera.addCallbackBuffer(gBuffer);
