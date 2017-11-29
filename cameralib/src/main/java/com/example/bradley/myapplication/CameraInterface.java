@@ -1,6 +1,7 @@
 package com.example.bradley.myapplication;
 
 import android.graphics.ImageFormat;
+import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.view.SurfaceHolder;
 
@@ -92,14 +93,24 @@ public class CameraInterface implements Camera.PreviewCallback {
 
     }
 
+    public void doStartPreviewbyTextureView(SurfaceTexture texture){
+
+        try {
+            mCamera.setPreviewTexture(texture);
+            mCamera.addCallbackBuffer(gBuffer);
+            mCamera.setPreviewCallbackWithBuffer(this);
+            mCamera.startPreview();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
 
     @Override
     public void onPreviewFrame(byte[] data, Camera camera) {
         mCamera.addCallbackBuffer(gBuffer);
     }
-
-
-
 
 
 }

@@ -1,6 +1,7 @@
 package com.example.bradley.myapplication;
 
 import android.content.Context;
+import android.graphics.SurfaceTexture;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
@@ -69,6 +70,10 @@ public class CameraManager  {
 
     public void startPreview(SurfaceHolder surfaceHolder){
         mCameraInterface.doStartPreview(surfaceHolder);
+    }
+
+    public void startPreviewBySurfaceTexture(SurfaceTexture texture){
+        mCameraInterface.doStartPreviewbyTextureView(texture);
     }
 
     public void closeCamera(){

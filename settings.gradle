@@ -1,1 +1,1 @@
-include ':app', ':cameralib'
+include ':app', ':cameralib', ':TextureView'
